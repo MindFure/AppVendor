@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   php:
-    build: 
+    build:
       context: ./php-docker
     container_name: php-fpm
     volumes:
-      - ./php-docker/AppVendor/auto-part-shop
+      - ./AppVendor/auto-part-shop:/var/www/html  # Монтируем директорию с приложением
     networks:
       - mynetwork
     depends_on:
@@ -18,35 +18,38 @@ services:
       - PHP_MEMORY_LIMIT=512M
 
   nginx:
-      build:
-        context: ./nginx-docker
-      container_name: nginx
-      ports:
+    build:
+      context: ./nginx-docker
+    container_name: nginx
+    ports:
       - "80:80"
-      volumes:
-      - ./nginx-docker/default.conf:/etc/nginx/conf.d/default.conf
-      networks:
+    volumes:
+      - ./nginx-docker/default.conf:/etc/nginx/conf.d/default.conf  # Конфигурация nginx
+    networks:
       - mynetwork
-      depends_on:
+    depends_on:
       - php
-    
+
   db:
-      build:
-        context: ./postgres-docker
-      container_name: my-postgres-container
-      environment:
-        POSTGRES_USER: myuser
-        POSTGRES_PASSWORD: mypass
-        POSTGRES_DB: auto-part-shop
-      ports:
+    build:
+      context: ./postgres-docker
+    container_name: my-postgres-container
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: auto-part-shop
+    ports:
       - "5432:5432"
-      volumes:
-        ./postgres-docker/postgresql.conf:/etc/postgresql/16/main/postgresql.conf
-        ./postgres-docker/pg_hba.conf:/etc/postgresql/16/main/pg_hba.conf
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Монтируем volume для хранения данных
+      - ./postgres-docker/postgresql.conf:/etc/postgresql/postgresql.conf.sample  # Конфигурация PostgreSQL
+      - ./postgres-docker/pg_hba.conf:/etc/postgresql/pg_hba.conf  # Конфигурация безопасности PostgreSQL
+    networks:
+      - mynetwork
 
 networks:
   mynetwork:
     driver: bridge
 
 volumes:
-  pgdata:
+  pgdata:  # Определяем volume для хранения данных PostgreSQL
