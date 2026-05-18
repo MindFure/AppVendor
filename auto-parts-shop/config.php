@@ -2,7 +2,8 @@
 session_start();
 
 // Настройки базы данных PostgreSQL
-define('DB_HOST', '192.168.0.111');
+$ip = trim(shell_exec('hostname -I'));
+define('DB_HOST', 'db');
 define('DB_PORT', '5432');
 define('DB_NAME', 'auto_part_shop');
 define('DB_USER', 'myuser');
