@@ -5,6 +5,7 @@ services:
     build:
       context: ./docker_php
     container_name: php-fpm
+    restart: unless-stopped
     volumes:
       - ./auto-parts-shop:/var/www/html  # Монтируем директорию с приложением
     networks:
@@ -21,6 +22,7 @@ services:
     build:
       context: ./docker_nginx
     container_name: nginx
+    restart: unless-stopped
     ports:
       - "80:80"
     volumes:
@@ -34,10 +36,11 @@ services:
     build:
       context: ./docker_postgresql
     container_name: my-postgres-container
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypass
-      POSTGRES_DB: auto_part_shop
+      POSTGRES_USER: ${DB_USER:-myuser}         # 5. Прячем пароли в файл .env
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mypass}
+      POSTGRES_DB: ${DB_NAME:-auto_part_shop}
     ports:
       - "5432:5432"
     volumes:
@@ -47,6 +50,11 @@ services:
       - ./AppVendor/postgres-docker/pg_hba.conf:/etc/postgresql/pg_hba.conf  # Конфигурация безопасности PostgreSQL
     networks:
       - mynetwork
+    healthcheck:                 # 7. Проверка "здоровья" базы данных
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-myuser} -d ${DB_NAME:-auto_part_shop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   mynetwork:
