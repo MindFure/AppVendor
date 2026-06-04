@@ -1,0 +1,119 @@
+---
+- name: Деплой магазина автозапчастей на основе Docker Compose через Git
+  hosts: webservers
+  become: yes
+  vars:
+    project_dir: "var/www/AppVendor"
+    # Эти значения по умолчанию можно переопределять из Jenkins
+    repo_url: "https://github.com/MindFure/AppVendor" # Укажи свой URL (SSH или HTTPS)
+    repo_branch: "main"
+
+  tasks:
+    # =================================================================
+    # ШАГ 1: Установка и обновление Docker
+    # =================================================================
+     Chil:
+    - name: Установка системных зависимостей
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - git # Git обязателен на целевом сервере
+        state: present
+        update_cache: yes
+
+    - name: Создание директории для ключей APT
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Удаление старых конфликтующих ключей и старых записей репозиториев
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/keyrings/docker.gpg
+        - /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+
+    - name: Добавление актуального GPG-ключа Docker
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+        force: yes
+
+    - name: Получение архитектуры системы
+      command: dpkg --print-architecture
+      register: dpkg_arch
+      changed_when: false
+
+    - name: Получение кодового имени релиза
+      command: lsb_release -cs
+      register: lsb_release
+      changed_when: false
+
+    - name: Добавление репозитория Docker (используя docker.asc)
+      apt_repository:
+        repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable"
+        state: present
+        filename: docker
+
+    - name: Установка Docker и Docker Compose плагина
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Проверка запуска службы Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # =================================================================
+    # ШАГ 2: Клонирование репозитория напрямую на целевой сервер
+    # =================================================================
+    - name: Клонирование или обновление репозитория проекта
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ project_dir }}"
+        version: "{{ repo_branch }}"
+        force: yes # Игнорировать локальные изменения на сервере, если они появятся
+      register: git_result
+
+    # =================================================================
+    # ШАГ 3: Сборка и запуск контейнеров
+    # =================================================================
+    - name: Остановка существующих контейнеров проекта
+      command: docker compose down
+      args:
+        chdir: "{{ project_dir }}"
+      ignore_errors: yes
+
+    - name: Принудительное удаление конфликтующих контейнеров
+      command: docker rm -f {{ item }}
+      loop:
+        - my-postgres-container
+        - php-fpm
+        - nginx
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Очистка старых неиспользуемых образов
+      command: docker system prune -f
+      ignore_errors: yes
+
+    - name: Сборка образов и запуск контейнеров
+      command: docker compose up --build -d
+      args:
+        chdir: "{{ project_dir }}"
+      register: compose_output
+      changed_when: "'Started' in compose_output.stdout or 'Built' in compose_output.stdout"
