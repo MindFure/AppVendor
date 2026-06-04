@@ -54,7 +54,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-myuser} -d ${DB_NAME:-auto_part_shop}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 5  
 
 networks:
   mynetwork:
