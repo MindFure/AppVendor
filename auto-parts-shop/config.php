@@ -35,7 +35,9 @@ try {
 
 // Остальной код без изменений...
 define('SITE_NAME', 'AutoParts Shop');
-define('SITE_URL', 'http://localhost/auto-parts-shop');
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+define('SITE_URL', $protocol . $host . '/auto-parts-shop');
 
 function h($str) {
     return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
