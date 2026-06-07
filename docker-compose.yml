@@ -68,6 +68,17 @@ services:
     depends_on:
       - node-exporter
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana # Сохраняем твои дашборды
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -80,3 +91,4 @@ networks:
 volumes:
   pgdata:  # Определяем volume для хранения данных PostgreSQL
   prometheus_data:
+  grafana_data:
