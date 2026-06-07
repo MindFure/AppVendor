@@ -56,9 +56,27 @@ services:
       timeout: 5s
       retries: 5  
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus # Сохраняем метрики при перезапусках
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    depends_on:
+      - node-exporter
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+
 networks:
   mynetwork:
     driver: bridge
 
 volumes:
   pgdata:  # Определяем volume для хранения данных PostgreSQL
+  prometheus_data:
