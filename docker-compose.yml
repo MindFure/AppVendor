@@ -66,59 +66,59 @@ services:
       - mynetwork
 
   pg-node1:
-  image: ghcr.io/zalando/spilo-16:3.3-p3
-  container_name: pg-node1
-  environment:
-    - SCOPE=pg-cluster
-    - PATRONI_ETCD3_HOSTS=etcd:2379
-    - PATRONI_SCOPE=pg-cluster
-    - PATRONI_NAME=pg-node1
-    - PATRONI_POSTGRESQL_PG_HBA="host all all 0.0.0.0/0 md5"
-    - PATRONI_POSTGRESQL_REPLICATION_USERNAME=standby
-    - PATRONI_POSTGRESQL_REPLICATION_PASSWORD=standby_pass
-    - PATRONI_POSTGRESQL_SUPERUSER_USERNAME=postgres
-    - PATRONI_POSTGRESQL_SUPERUSER_PASSWORD=postgres_pass
-    # КРИТИЧНО: задаём пользователей при инициализации
-    - PATRONI_POSTGRESQL_USERS="myuser:mypass"
-    - PATRONI_POSTGRESQL_DATABASES="auto_part_shop:myuser"
-    # Дополнительные параметры
-    - PATRONI_POSTGRESQL_PARAMETERS="max_connections=100,shared_buffers=256MB"
-    - PATRONI_RESTAPI_CONNECT_ADDRESS=pg-node1:8008
-    - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
-    - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node1:5432
-    - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
-  volumes:
-    - pg_node1_data:/home/postgres/pgdata
-  networks:
-    - mynetwork
-  depends_on:
-    - etcd
+    image: ghcr.io/zalando/spilo-16:3.3-p3
+    container_name: pg-node1
+    environment:
+      - SCOPE=pg-cluster
+      - PATRONI_ETCD3_HOSTS=etcd:2379
+      - PATRONI_SCOPE=pg-cluster
+      - PATRONI_NAME=pg-node1
+      - PATRONI_POSTGRESQL_PG_HBA="host all all 0.0.0.0/0 md5"
+      - PATRONI_POSTGRESQL_REPLICATION_USERNAME=standby
+      - PATRONI_POSTGRESQL_REPLICATION_PASSWORD=standby_pass
+      - PATRONI_POSTGRESQL_SUPERUSER_USERNAME=postgres
+      - PATRONI_POSTGRESQL_SUPERUSER_PASSWORD=postgres_pass
+      # КРИТИЧНО: задаём пользователей при инициализации
+      - PATRONI_POSTGRESQL_USERS="myuser:mypass"
+      - PATRONI_POSTGRESQL_DATABASES="auto_part_shop:myuser"
+      # Дополнительные параметры
+      - PATRONI_POSTGRESQL_PARAMETERS="max_connections=100,shared_buffers=256MB"
+      - PATRONI_RESTAPI_CONNECT_ADDRESS=pg-node1:8008
+      - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
+      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node1:5432
+      - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+    volumes:
+      - pg_node1_data:/home/postgres/pgdata
+    networks:
+      - mynetwork
+    depends_on:
+      - etcd
 
-pg-node2:
-  image: ghcr.io/zalando/spilo-16:3.3-p3
-  container_name: pg-node2
-  environment:
-    - SCOPE=pg-cluster
-    - PATRONI_ETCD3_HOSTS=etcd:2379
-    - PATRONI_SCOPE=pg-cluster
-    - PATRONI_NAME=pg-node2
-    - PATRONI_POSTGRESQL_PG_HBA="host all all 0.0.0.0/0 md5"
-    - PATRONI_POSTGRESQL_REPLICATION_USERNAME=standby
-    - PATRONI_POSTGRESQL_REPLICATION_PASSWORD=standby_pass
-    - PATRONI_POSTGRESQL_SUPERUSER_USERNAME=postgres
-    - PATRONI_POSTGRESQL_SUPERUSER_PASSWORD=postgres_pass
-    - PATRONI_POSTGRESQL_USERS="myuser:mypass"
-    - PATRONI_POSTGRESQL_DATABASES="auto_part_shop:myuser"
-    - PATRONI_RESTAPI_CONNECT_ADDRESS=pg-node2:8008
-    - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
-    - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node2:5432
-    - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
-  volumes:
-    - pg_node2_data:/home/postgres/pgdata
-  networks:
-    - mynetwork
-  depends_on:
-    - etcd
+  pg-node2:
+    image: ghcr.io/zalando/spilo-16:3.3-p3
+    container_name: pg-node2
+    environment:
+      - SCOPE=pg-cluster
+      - PATRONI_ETCD3_HOSTS=etcd:2379
+      - PATRONI_SCOPE=pg-cluster
+      - PATRONI_NAME=pg-node2
+      - PATRONI_POSTGRESQL_PG_HBA="host all all 0.0.0.0/0 md5"
+      - PATRONI_POSTGRESQL_REPLICATION_USERNAME=standby
+      - PATRONI_POSTGRESQL_REPLICATION_PASSWORD=standby_pass
+      - PATRONI_POSTGRESQL_SUPERUSER_USERNAME=postgres
+      - PATRONI_POSTGRESQL_SUPERUSER_PASSWORD=postgres_pass
+      - PATRONI_POSTGRESQL_USERS="myuser:mypass"
+      - PATRONI_POSTGRESQL_DATABASES="auto_part_shop:myuser"
+      - PATRONI_RESTAPI_CONNECT_ADDRESS=pg-node2:8008
+      - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
+      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node2:5432
+      - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+    volumes:
+      - pg_node2_data:/home/postgres/pgdata
+    networks:
+      - mynetwork
+    depends_on:
+      - etcd
 
   haproxy:
     image: haproxy:latest
