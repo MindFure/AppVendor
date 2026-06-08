@@ -64,12 +64,17 @@ services:
       - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
     networks:
       - mynetwork
+    volumes: # ДОБАВЛЯЕМ ЭТО
+      - etcd_data:/etcd-data
+    command: etcd --data-dir=/etcd-data # ДОБАВЛЯЕМ ЭТО
 
   pg-node1:
     image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node1
     environment:
       - SCOPE=pg-cluster
+      - ETCD_HOST=etcd:2379
+      - ETCD3_HOST=etcd:2379
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node1
@@ -99,6 +104,8 @@ services:
     container_name: pg-node2
     environment:
       - SCOPE=pg-cluster
+      - ETCD_HOST=etcd:2379
+      - ETCD3_HOST=etcd:2379
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node2
@@ -171,3 +178,4 @@ volumes:
   grafana_data:
   pg_node1_data:
   pg_node2_data:
+  etcd_data:
