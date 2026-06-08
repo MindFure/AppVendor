@@ -8,7 +8,6 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Jenkins скачивает актуальный код из твоего GitHub
                 checkout scm
             }
         }
