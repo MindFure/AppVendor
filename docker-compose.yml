@@ -63,7 +63,7 @@ services:
       - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
       - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
     networks:
-      - app-network
+      - mynetwork
 
   pg-node1:
     image: zalando/spilo-16:latest
@@ -81,7 +81,7 @@ services:
     volumes:
       - pg_node1_data:/home/postgres/pgdata
     networks:
-      - app-network
+      - mynetwork
     depends_on:
       - etcd
 
@@ -101,7 +101,7 @@ services:
     volumes:
       - pg_node2_data:/home/postgres/pgdata
     networks:
-      - app-network
+      - mynetwork
     depends_on:
       - etcd
 
@@ -113,7 +113,7 @@ services:
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     networks:
-      - app-network
+      - mynetwork
     depends_on:
       - pg-node1
       - pg-node2          
