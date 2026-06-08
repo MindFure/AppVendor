@@ -121,3 +121,20 @@
       fail:
         msg: "ВНИМАНИЕ: Реплика (pg-node2) не смогла подключиться к Лидеру или кластер изолирован!"
       when: "'Replica' not in patroni_status.stdout or 'running' not in patroni_status.stdout"
+    # =================================================================
+    # ШАГ 5: Автоматизация бэкапов через Cron
+    # =================================================================
+    - name: Убеждаемся, что директория для бэкапов существует
+      ansible.builtin.file:
+        path: "{{ project_dir }}/backups"
+        state: directory
+        owner: dyuzov
+        mode: '0755'
+
+    - name: Добавление регулярного бэкапа базы данных в crontab
+      ansible.builtin.cron:
+        name: "AppVendor PostgreSQL Backup" # Уникальное имя, по нему Ansible находит таску
+        minute: "0"
+        hour: "3"
+        user: "dyuzov"
+        job: "/usr/bin/python3 {{ project_dir }}/scripts/backup.py >> {{ project_dir }}/backups/cron.log 2>&1"  
