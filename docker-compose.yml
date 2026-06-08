@@ -73,20 +73,19 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node1
-      - PATRONI_POSTGRESQL_PG_HBA="host all all 0.0.0.0/0 md5"
-      - PATRONI_POSTGRESQL_REPLICATION_USERNAME=standby
-      - PATRONI_POSTGRESQL_REPLICATION_PASSWORD=standby_pass
-      - PATRONI_POSTGRESQL_SUPERUSER_USERNAME=postgres
-      - PATRONI_POSTGRESQL_SUPERUSER_PASSWORD=postgres_pass
-      # КРИТИЧНО: задаём пользователей при инициализации
-      - PATRONI_POSTGRESQL_USERS="myuser:mypass"
-      - PATRONI_POSTGRESQL_DATABASES="auto_part_shop:myuser"
-      # Дополнительные параметры
-      - PATRONI_POSTGRESQL_PARAMETERS="max_connections=100,shared_buffers=256MB"
-      - PATRONI_RESTAPI_CONNECT_ADDRESS=pg-node1:8008
-      - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
-      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node1:5432
+      # Критически важные переменные для репликации
+      - PATRONI_REPLICATION_USERNAME=standby
+      - PATRONI_REPLICATION_PASSWORD=strong_repl_pass
+      - PATRONI_SUPERUSER_USERNAME=postgres
+      - PATRONI_SUPERUSER_PASSWORD=postgres_super_pass
+      # Твой пользователь
+      - PATRONI_APPLICATION_USER=myuser
+      - PATRONI_APPLICATION_PASSWORD=mypass
+      - PATRONI_APPLICATION_DATABASE=auto_part_shop
+      # Настройки
+      - PATRONI_POSTGRESQL_PGPASS=/run/secrets/pgpass
       - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node1:5432
     volumes:
       - pg_node1_data:/home/postgres/pgdata
     networks:
@@ -102,17 +101,15 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node2
-      - PATRONI_POSTGRESQL_PG_HBA="host all all 0.0.0.0/0 md5"
-      - PATRONI_POSTGRESQL_REPLICATION_USERNAME=standby
-      - PATRONI_POSTGRESQL_REPLICATION_PASSWORD=standby_pass
-      - PATRONI_POSTGRESQL_SUPERUSER_USERNAME=postgres
-      - PATRONI_POSTGRESQL_SUPERUSER_PASSWORD=postgres_pass
-      - PATRONI_POSTGRESQL_USERS="myuser:mypass"
-      - PATRONI_POSTGRESQL_DATABASES="auto_part_shop:myuser"
-      - PATRONI_RESTAPI_CONNECT_ADDRESS=pg-node2:8008
-      - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
-      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node2:5432
+      - PATRONI_REPLICATION_USERNAME=standby
+      - PATRONI_REPLICATION_PASSWORD=strong_repl_pass
+      - PATRONI_SUPERUSER_USERNAME=postgres
+      - PATRONI_SUPERUSER_PASSWORD=postgres_super_pass
+      - PATRONI_APPLICATION_USER=myuser
+      - PATRONI_APPLICATION_PASSWORD=mypass
+      - PATRONI_APPLICATION_DATABASE=auto_part_shop
       - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node2:5432
     volumes:
       - pg_node2_data:/home/postgres/pgdata
     networks:
