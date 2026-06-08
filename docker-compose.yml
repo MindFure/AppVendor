@@ -74,7 +74,7 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node1
-      - PATRONI_POSTGRESQL_PG_HBA=host all all 0.0.0.0/0 md5
+      - PATRONI_DCS={"postgresql":{"pg_hba":["host all all 0.0.0.0/0 md5","host replication standby 0.0.0.0/0 md5"]}}
       - POSTGRES_PASSWORD=mypass
       - POSTGRES_USER=myuser
       - POSTGRES_DB=auto_part_shop
@@ -94,7 +94,7 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node2
-      - PATRONI_POSTGRESQL_PG_HBA=host all all 0.0.0.0/0 md5
+      - PATRONI_DCS={"postgresql":{"pg_hba":["host all all 0.0.0.0/0 md5","host replication standby 0.0.0.0/0 md5"]}}
       - POSTGRES_PASSWORD=mypass
       - POSTGRES_USER=myuser
       - POSTGRES_DB=auto_part_shop
