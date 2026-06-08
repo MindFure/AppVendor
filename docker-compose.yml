@@ -66,7 +66,7 @@ services:
       - mynetwork
 
   pg-node1:
-    image: zalando/spilo-16:latest
+    image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node1
     environment:
       - SCOPE=pg-cluster
@@ -86,7 +86,7 @@ services:
       - etcd
 
   pg-node2:
-    image: zalando/spilo-16:latest
+    image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node2
     environment:
       - SCOPE=pg-cluster
