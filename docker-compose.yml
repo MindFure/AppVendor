@@ -73,35 +73,26 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node1
+      # Доступы для HAProxy и PHP (чтобы не делать PATCH вручную)
+      - PATRONI_DCS={"postgresql":{"pg_hba":["host all all 0.0.0.0/0 md5","host replication standby 0.0.0.0/0 md5"]}}
       # Критически важные переменные для репликации
       - PATRONI_REPLICATION_USERNAME=standby
       - PATRONI_REPLICATION_PASSWORD=strong_repl_pass
       - PATRONI_SUPERUSER_USERNAME=postgres
       - PATRONI_SUPERUSER_PASSWORD=postgres_super_pass
+      # Автоматическое создание твоей базы и пользователя!
       - PATRONI_APPLICATION_USER=myuser
       - PATRONI_APPLICATION_PASSWORD=mypass
       - PATRONI_APPLICATION_DATABASE=auto_part_shop
-      # Настройки
+      # Настройки сети Postgres
       - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
       - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node1:5432
-      # Bootstrap кластера (только на первом узле)
-      - PATRONI_BOOTSTRAP_METHOD=initdb
-      - PATRONI_BOOTSTRAP_INITDB=wal-segsize=64MB,wal-keep-size=2048MB,max-connections=100
     volumes:
       - pg_node1_data:/home/postgres/pgdata
     networks:
       - mynetwork
     depends_on:
       - etcd
-    command:
-      - "bash"
-      - "-c"
-      - |
-        if [ ! -f /home/postgres/pgdata/PG_VERSION ]; then
-          patroni /etc/patroni.yml
-        else
-          patroni /etc/patroni.yml
-        fi
 
   pg-node2:
     image: ghcr.io/zalando/spilo-16:3.3-p3
@@ -111,6 +102,7 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node2
+      - PATRONI_DCS={"postgresql":{"pg_hba":["host all all 0.0.0.0/0 md5","host replication standby 0.0.0.0/0 md5"]}}
       - PATRONI_REPLICATION_USERNAME=standby
       - PATRONI_REPLICATION_PASSWORD=strong_repl_pass
       - PATRONI_SUPERUSER_USERNAME=postgres
@@ -120,11 +112,6 @@ services:
       - PATRONI_APPLICATION_DATABASE=auto_part_shop
       - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
       - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node2:5432
-      # Ключевые настройки для реплики
-      - PATRONI_BOOTSTRAP_METHOD=replica
-      - PATRONI_REPLICA_METHOD=wal_e
-      # Ждем появления мастера
-      - PATRONI_WAIT_MASTER_BOOTSTRAP=true
     volumes:
       - pg_node2_data:/home/postgres/pgdata
     networks:
