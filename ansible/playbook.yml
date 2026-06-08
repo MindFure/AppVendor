@@ -3,9 +3,8 @@
   hosts: webservers
   become: yes
   vars:
-    project_dir: "var/www/AppVendor"
-    # Эти значения по умолчанию можно переопределять из Jenkins
-    repo_url: "https://github.com/MindFure/AppVendor" # Укажи свой URL (SSH или HTTPS)
+    project_dir: "/home/dyuzov/var/www/AppVendor"
+    repo_url: "https://github.com/MindFure/AppVendor"
     repo_branch: "main"
 
   tasks:
@@ -20,7 +19,7 @@
           - curl
           - gnupg
           - lsb-release
-          - git # Git обязателен на целевом сервере
+          - git
         state: present
         update_cache: yes
 
@@ -85,34 +84,40 @@
         repo: "{{ repo_url }}"
         dest: "{{ project_dir }}"
         version: "{{ repo_branch }}"
-        force: yes # Игнорировать локальные изменения на сервере, если они появятся
+        force: yes
       register: git_result
 
     # =================================================================
-    # ШАГ 3: Сборка и запуск контейнеров
+    # ШАГ 3: Умная сборка и деплой без даунтайма БД
     # =================================================================
-    - name: Остановка существующих контейнеров проекта
-      command: docker compose down
-      args:
-        chdir: "{{ project_dir }}"
-      ignore_errors: yes
-
-    - name: Принудительное удаление конфликтующих контейнеров
-      command: docker rm -f {{ item }}
-      loop:
-        - my-postgres-container
-        - php-fpm
-        - nginx
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Очистка старых неиспользуемых образов
-      command: docker system prune -f
-      ignore_errors: yes
-
-    - name: Сборка образов и запуск контейнеров
-      command: docker compose up --build -d
+    - name: Умное обновление контейнеров (пересборка только изменившегося кода)
+      command: docker compose up -d --build
       args:
         chdir: "{{ project_dir }}"
       register: compose_output
-      changed_when: "'Started' in compose_output.stdout or 'Built' in compose_output.stdout"
+
+    - name: Очистка старых неиспользуемых образов
+      command: docker image prune -f
+      changed_when: false
+
+    - name: Небольшая пауза для стабилизации сети (5 секунд)
+      pause:
+        seconds: 5
+
+    # =================================================================
+    # ШАГ 4: Контроль здоровья отказоустойчивого кластера
+    # =================================================================
+    - name: Проверка актуального статуса Patroni-кластера
+      command: docker exec pg-node1 patronictl list
+      register: patroni_status
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Вывод таблицы кластера в консоль Jenkins
+      debug:
+        msg: "{{ patroni_status.stdout_lines }}"
+
+    - name: Автоматическая проверка — завелась ли Реплика?
+      fail:
+        msg: "ВНИМАНИЕ: Реплика (pg-node2) не смогла подключиться к Лидеру или кластер изолирован!"
+      when: "'Replica' not in patroni_status.stdout or 'running' not in patroni_status.stdout"
