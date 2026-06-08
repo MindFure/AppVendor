@@ -11,7 +11,7 @@ services:
     networks:
       - mynetwork
     depends_on:
-      - db
+      - haproxy
     ports:
       - "9000:9000"
     environment:
@@ -32,29 +32,91 @@ services:
     depends_on:
       - php
 
-  db:
-    build:
-      context: ./docker_postgresql
-    container_name: my-postgres-container
-    restart: unless-stopped
+  # db:
+  #   build:
+  #     context: ./docker_postgresql
+  #   container_name: my-postgres-container
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: ${DB_USER:-myuser}         # 5. Прячем пароли в файл .env
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-mypass}
+  #     POSTGRES_DB: ${DB_NAME:-auto_part_shop}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ./docker_postgresql/init:/docker-entrypoint-initdb.d
+  #     - pgdata:/var/lib/postgresql/data  # Монтируем volume для хранения данных
+  #     - ./AppVendor/postgres-docker/postgresql.conf:/etc/postgresql/postgresql.conf.sample  # Конфигурация PostgreSQL
+  #     - ./AppVendor/postgres-docker/pg_hba.conf:/etc/postgresql/pg_hba.conf  # Конфигурация безопасности PostgreSQL
+  #   networks:
+  #     - mynetwork
+  #   healthcheck:                 # 7. Проверка "здоровья" базы данных
+  #     test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-myuser} -d ${DB_NAME:-auto_part_shop}"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5  
+  etcd:
+    image: bitnami/etcd:latest
+    container_name: etcd
     environment:
-      POSTGRES_USER: ${DB_USER:-myuser}         # 5. Прячем пароли в файл .env
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-mypass}
-      POSTGRES_DB: ${DB_NAME:-auto_part_shop}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./docker_postgresql/init:/docker-entrypoint-initdb.d
-      - pgdata:/var/lib/postgresql/data  # Монтируем volume для хранения данных
-      - ./AppVendor/postgres-docker/postgresql.conf:/etc/postgresql/postgresql.conf.sample  # Конфигурация PostgreSQL
-      - ./AppVendor/postgres-docker/pg_hba.conf:/etc/postgresql/pg_hba.conf  # Конфигурация безопасности PostgreSQL
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
     networks:
-      - mynetwork
-    healthcheck:                 # 7. Проверка "здоровья" базы данных
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-myuser} -d ${DB_NAME:-auto_part_shop}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5  
+      - app-network
+
+  pg-node1:
+    image: zalando/spilo-16:latest
+    container_name: pg-node1
+    environment:
+      - SCOPE=pg-cluster
+      - CLUSTER_NAME_LABEL=pg-cluster
+      - PATRONI_ETCD3_HOSTS=etcd:2379
+      - PATRONI_SCOPE=pg-cluster
+      - PATRONI_NAME=pg-node1
+      - PATRONI_POSTGRESQL_PG_HBA=host all all 0.0.0.0/0 md5
+      - POSTGRES_PASSWORD=mypass
+      - POSTGRES_USER=myuser
+      - POSTGRES_DB=auto_part_shop
+    volumes:
+      - pg_node1_data:/home/postgres/pgdata
+    networks:
+      - app-network
+    depends_on:
+      - etcd
+
+  pg-node2:
+    image: zalando/spilo-16:latest
+    container_name: pg-node2
+    environment:
+      - SCOPE=pg-cluster
+      - CLUSTER_NAME_LABEL=pg-cluster
+      - PATRONI_ETCD3_HOSTS=etcd:2379
+      - PATRONI_SCOPE=pg-cluster
+      - PATRONI_NAME=pg-node2
+      - PATRONI_POSTGRESQL_PG_HBA=host all all 0.0.0.0/0 md5
+      - POSTGRES_PASSWORD=mypass
+      - POSTGRES_USER=myuser
+      - POSTGRES_DB=auto_part_shop
+    volumes:
+      - pg_node2_data:/home/postgres/pgdata
+    networks:
+      - app-network
+    depends_on:
+      - etcd
+
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    ports:
+      - "5432:5432" # Открываем стандартный порт Postgres наружу для PHP
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks:
+      - app-network
+    depends_on:
+      - pg-node1
+      - pg-node2          
 
   prometheus:
     image: prom/prometheus:latest
@@ -92,3 +154,5 @@ volumes:
   pgdata:  # Определяем volume для хранения данных PostgreSQL
   prometheus_data:
   grafana_data:
+  pg_node1_data:
+  pg_node2_data:

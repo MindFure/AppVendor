@@ -3,7 +3,7 @@ session_start();
 
 // Настройки базы данных PostgreSQL
 $ip = trim(shell_exec('hostname -I'));
-define('DB_HOST', 'db');
+define('DB_HOST', 'haproxy');
 define('DB_PORT', '5432');
 define('DB_NAME', 'auto_part_shop');
 define('DB_USER', 'myuser');
