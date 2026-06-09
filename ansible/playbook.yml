@@ -138,3 +138,38 @@
         hour: "3"
         user: "dyuzov"
         job: "/usr/bin/python3 {{ project_dir }}/scripts/backup.py >> {{ project_dir }}/backups/cron.log 2>&1"  
+    # =================================================================
+    # ШАГ 6: Автоматический мониторинг аптайма и сети (Watchdog)
+    # =================================================================
+    - name: Гарантировать наличие папок для скриптов и логов мониторинга
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: dyuzov
+        group: dyuzov
+      loop:
+        - "{{ project_dir }}/scripts"
+        - "{{ project_dir }}/logs"
+
+    - name: Копировать скрипт мониторинга сети из шаблона
+      ansible.builtin.template:
+        src: templates/network_watchdog.py.j2
+        dest: "{{ project_dir }}/scripts/network_watchdog.py"
+        mode: '0755'
+        owner: dyuzov
+        group: dyuzov
+
+    - name: Добавить запись в Cron для логирования ребутов сервера
+      ansible.builtin.cron:
+        name: "AppVendor Watchdog Boot Log"
+        special_time: reboot
+        user: "dyuzov"
+        job: "/usr/bin/python3 {{ project_dir }}/scripts/network_watchdog.py boot"
+
+    - name: Добавить запись в Cron для ежеминутной проверки интернета
+      ansible.builtin.cron:
+        name: "AppVendor Watchdog Internet Check"
+        minute: "*"
+        user: "dyuzov"
+        job: "/usr/bin/python3 {{ project_dir }}/scripts/network_watchdog.py"    
