@@ -1,4 +1,5 @@
 <?php
+ob_start();
 session_start();
 
 // Настройки базы данных PostgreSQL
