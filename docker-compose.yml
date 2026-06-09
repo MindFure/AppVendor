@@ -58,6 +58,7 @@ services:
   etcd:
     image: quay.io/coreos/etcd:v3.5.11
     container_name: etcd
+    restart: unless-stopped
     environment:
       - ALLOW_NONE_AUTHENTICATION=yes
       - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
@@ -71,6 +72,7 @@ services:
   pg-node1:
     image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node1
+    restart: unless-stopped
     environment:
       - SCOPE=pg-cluster
       - ETCD_HOST=etcd:2379
@@ -102,6 +104,7 @@ services:
   pg-node2:
     image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node2
+    restart: unless-stopped
     environment:
       - SCOPE=pg-cluster
       - ETCD_HOST=etcd:2379
@@ -130,6 +133,7 @@ services:
   haproxy:
     image: haproxy:latest
     container_name: haproxy
+    restart: unless-stopped
     ports:
       - "5432:5432" # Открываем стандартный порт Postgres наружу для PHP
     volumes:
