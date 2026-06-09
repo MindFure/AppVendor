@@ -6,15 +6,6 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'node-exporter' # Наш датчик сервера
-    static_configs:
-      - targets: ['node-exporter:9100']
-
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
   # Метрики балансировщика HAProxy
   - job_name: 'haproxy'
     static_configs:
@@ -25,3 +16,7 @@ scrape_configs:
     metrics_path: '/metrics'
     static_configs:
       - targets: ['pg-node1:8008', 'pg-node2:8008']
+    
+  - job_name: 'node-exporter' # Наш датчик сервера
+    static_configs:
+      - targets: ['node-exporter:9100']  
