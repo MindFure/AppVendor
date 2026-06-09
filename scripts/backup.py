@@ -19,7 +19,7 @@ try:
     # Открываем файл на запись и перенаправляем туда вывод команды
     with open(FILENAME, "w") as backup_file:
         result = subprocess.run(
-            ["docker", "exec", "-t", "haproxy", "pg_dump", "-h", "localhost", "-U", "postgres", "-d", "auto_part_shop"],
+            ["docker", "exec", "-u", "postgres", "pg-node1", "pg_dump", "-d", "auto_part_shop"],
             stdout=backup_file,
             stderr=subprocess.PIPE,
             text=True
