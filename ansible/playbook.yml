@@ -2,6 +2,7 @@
 - name: Деплой магазина автозапчастей на основе Docker Compose через Git
   hosts: webservers
   become: yes
+  gather_facts: false
   vars:
     project_dir: "/home/dyuzov/var/www/AppVendor"
     repo_url: "https://github.com/MindFure/AppVendor"
