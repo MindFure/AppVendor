@@ -154,7 +154,7 @@
 
     - name: Копировать скрипт мониторинга сети из шаблона
       ansible.builtin.template:
-        src: templates/network_watchdog.py.j2
+        src: network_watchdog.py.j2
         dest: "{{ project_dir }}/scripts/network_watchdog.py"
         mode: '0755'
         owner: dyuzov
