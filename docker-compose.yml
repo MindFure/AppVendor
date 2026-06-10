@@ -177,6 +177,8 @@ services:
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
+    networks:
+      - mynetwork
   
   alertmanager:
     image: prom/alertmanager:latest
