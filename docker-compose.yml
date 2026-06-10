@@ -136,6 +136,7 @@ services:
     restart: unless-stopped
     ports:
       - "5432:5432" # Открываем стандартный порт Postgres наружу для PHP
+      - "7000:7000"
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     networks:
@@ -155,6 +156,8 @@ services:
     restart: unless-stopped
     depends_on:
       - node-exporter
+    networks:
+      - mynetwork
 
   grafana:
     image: grafana/grafana:latest
@@ -166,11 +169,23 @@ services:
     restart: unless-stopped
     depends_on:
       - prometheus
+    networks:
+      - mynetwork
 
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
+  
+  alertmanager:
+    image: prom/alertmanager:latest
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      - mynetwork
 
 networks:
   mynetwork:
