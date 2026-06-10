@@ -11,3 +11,5 @@ receivers:
       - bot_token: '8647077830:AAGwMuVlN7t6GGmohKrab5bUIGD5vFaSWt0'
         chat_id: 214325677
         parse_mode: 'HTML'
+        http_config:
+          proxy_url: 'http://185.162.230.13:3128'
