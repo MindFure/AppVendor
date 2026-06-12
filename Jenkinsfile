@@ -15,9 +15,9 @@ pipeline {
         stage('Deploy via Ansible') {
             steps {
                 ansiblePlaybook(
-                    playbook: 'ansible/playbook.yml', // Путь к плейбуку в репозитории
-                    inventory: 'ansible/inventory/hosts.ini', // Путь к файлу с IP сервера
-                    credentialsId: 'vm-ssh-key',    // Тот самый ID ключа, который ты создал в Jenkins!
+                    playbook: 'deploy/ansible/playbook.yml', 
+                    inventory: 'deploy/ansible/inventory/hosts.ini', 
+                    credentialsId: 'vm-ssh-key',    
                     colorized: true,                // Чтобы логи были цветными и красивыми
                     extraVars: [
                         repo_branch: "${params.BRANCH}"
