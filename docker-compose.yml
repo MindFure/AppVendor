@@ -3,7 +3,7 @@ version: '3.8'
 services:
   php:
     build:
-      context: ./docker_php
+      context: ./docker/docker_php
     container_name: php-fpm
     restart: unless-stopped
     volumes:
@@ -20,13 +20,13 @@ services:
 
   nginx:
     build:
-      context: ./docker_nginx
+      context: ./docker/docker_nginx
     container_name: nginx
     restart: unless-stopped
     ports:
       - "80:80"
     volumes:
-      - ./docker_nginx/default.conf:/etc/nginx/conf.d/default.conf  # Конфигурация nginx
+      - ./docker/docker_nginx/default.conf:/etc/nginx/conf.d/default.conf  # Конфигурация nginx
     networks:
       - mynetwork
     depends_on:
@@ -138,7 +138,7 @@ services:
       - "5432:5432" # Открываем стандартный порт Postgres наружу для PHP
       - "7000:7000"
     volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./configs/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     networks:
       - mynetwork
     depends_on:
@@ -149,9 +149,9 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus # Сохраняем метрики при перезапусках
-      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - ./configs/monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
     ports:
       - "9090:9090"
     restart: unless-stopped
@@ -186,7 +186,7 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./configs/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     networks:
       - mynetwork
 
