@@ -28,7 +28,7 @@ data "cloudru_evolution_compute_image_collection" "ubuntu_img" {
 # 3. Читаем и шифруем cloud-init конфигурацию
 locals {
   cloud_config = templatefile("${path.module}/cloud-init.yaml.tpl", {
-    ssh_public_key = file("~/.ssh/appvendor_key.pub")
+    ssh_public_key = file("${path.module}/appvendor_key.pub")
     vm_name        = "appvendor-prod"
   })
 }
