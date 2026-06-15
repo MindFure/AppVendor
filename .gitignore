@@ -1,3 +1,8 @@
 .env
 backups/
-*.tfvars
+echo "" >> .gitignore
+echo "# Terraform" >> .gitignore
+echo ".terraform/" >> .gitignore
+echo "*.tfstate" >> .gitignore
+echo "*.tfstate.backup" >> .gitignore
+echo ".terraform.lock.hcl" >> .gitignore
