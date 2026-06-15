@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Какую ветку репозитория деплоить?')
+    }
+
+    environment {
+        // Секреты для Terraform (мы добавим их в Jenkins на следующем шаге)
+        TF_VAR_access_key = credentials('cloudru-access-key')
+        TF_VAR_secret_key = credentials('cloudru-secret-key')
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
+    }
+
+    stages {
+        stage('1. Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('2. Terraform: Создание ВМ в Cloud.ru') {
+            steps {
+                dir('deploy/terraform') {
+                    sh 'terraform init'
+                    sh 'terraform apply -auto-approve'
+                    
+                    // Пауза, чтобы ВМ успела создать пользователя dyuzov и применить ключи
+                    echo "Ожидание готовности SSH (60 сек)..."
+                    sh 'sleep 60'
+                }
+            }
+        }
+
+        stage('3. Подготовка динамического Inventory') {
+            steps {
+                dir('deploy/terraform') {
+                    sh 'chmod +x inventory.sh'
+                    // Скрипт создаст файл deploy/ansible/inventory/hosts.ini с новым IP
+                    sh './inventory.sh' 
+                }
+            }
+        }
+
+        stage('4. Deploy via Ansible на новый сервер') {
+            steps {
+                ansiblePlaybook(
+                    playbook: 'deploy/ansible/playbook.yml', 
+                    inventory: 'deploy/ansible/inventory/hosts.ini', // Используем сгенерированный файл
+                    credentialsId: 'appvendor-ssh-key',              // Твой SSH-ключ из Jenkins
+                    colorized: true,                
+                    extraVars: [
+                        repo_branch: "${params.BRANCH}"
+                    ]
+                )
+            }
+        }
+    }
+}
