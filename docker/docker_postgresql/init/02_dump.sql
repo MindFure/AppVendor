@@ -1,6 +1,7 @@
 --
 -- PostgreSQL database dump
 --
+\c auto_part_shop;
 
 \restrict TmbASIoenhFsX2KRaACfHI3cXbnLuIcHsTQ4JdFJnnC6dSL7gKdbB98W8Ie8GlY
 
