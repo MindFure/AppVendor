@@ -51,7 +51,6 @@ pipeline {
                     colorized: true,                
                     extraVars: [
                         repo_branch: "${params.BRANCH}"
-                        ansible_user: 'dyuzov'
                     ]
                 )
             }
