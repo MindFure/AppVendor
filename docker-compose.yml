@@ -72,6 +72,7 @@ services:
   pg-node1:
     image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node1
+    hostname: pg-node1
     restart: unless-stopped
     environment:
       - SCOPE=pg-cluster
@@ -80,6 +81,8 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node1
+      - PATRONI_ENDPOINT_ADDRESS=pg-node1
+      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node1:5432
       # Доступы для HAProxy и PHP (чтобы не делать PATCH вручную)
       - PATRONI_DCS={"postgresql":{"pg_hba":["host all all 0.0.0.0/0 md5","host replication standby 0.0.0.0/0 md5"]}}
       # Критически важные переменные для репликации
@@ -104,6 +107,7 @@ services:
   pg-node2:
     image: ghcr.io/zalando/spilo-16:3.3-p3
     container_name: pg-node2
+    hostname: pg-node2
     restart: unless-stopped
     environment:
       - SCOPE=pg-cluster
@@ -112,6 +116,8 @@ services:
       - PATRONI_ETCD3_HOSTS=etcd:2379
       - PATRONI_SCOPE=pg-cluster
       - PATRONI_NAME=pg-node2
+      - PATRONI_ENDPOINT_ADDRESS=pg-node2
+      - PATRONI_POSTGRESQL_CONNECT_ADDRESS=pg-node2:5432
       - PATRONI_DCS={"postgresql":{"pg_hba":["host all all 0.0.0.0/0 md5","host replication standby 0.0.0.0/0 md5"]}}
       - PATRONI_REPLICATION_USERNAME=standby
       - PATRONI_REPLICATION_PASSWORD=strong_repl_pass
