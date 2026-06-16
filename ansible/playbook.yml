@@ -1,0 +1,175 @@
+---
+- name: Деплой магазина автозапчастей на основе Docker Compose через Git
+  hosts: webservers
+  become: yes
+  vars:
+    project_dir: "/home/dyuzov/var/www/AppVendor"
+    repo_url: "https://github.com/MindFure/AppVendor"
+    repo_branch: "main"
+
+  tasks:
+    # =================================================================
+    # ШАГ 1: Установка и обновление Docker
+    # =================================================================
+    - name: Установка системных зависимостей
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - git
+        state: present
+        update_cache: yes
+
+    - name: Создание директории для ключей APT
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Удаление старых конфликтующих ключей и старых записей репозиториев
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/keyrings/docker.gpg
+        - /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+
+    - name: Добавление актуального GPG-ключа Docker
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+        force: yes
+
+    - name: Получение архитектуры системы
+      command: dpkg --print-architecture
+      register: dpkg_arch
+      changed_when: false
+
+    - name: Получение кодового имени релиза
+      command: lsb_release -cs
+      register: lsb_release
+      changed_when: false
+
+    - name: Добавление репозитория Docker (используя docker.asc)
+      apt_repository:
+        repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable"
+        state: present
+        filename: docker
+
+    - name: Установка Docker и Docker Compose плагина
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Проверка запуска службы Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # =================================================================
+    # ШАГ 2: Клонирование репозитория напрямую на целевой сервер
+    # =================================================================
+    - name: Клонирование или обновление репозитория проекта
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ project_dir }}"
+        version: "{{ repo_branch }}"
+        force: yes
+      register: git_result
+
+    # =================================================================
+    # ШАГ 3: Умная сборка и деплой без даунтайма БД
+    # =================================================================
+    - name: Умное обновление контейнеров (пересборка только изменившегося кода)
+      command: docker compose up -d --build
+      args:
+        chdir: "{{ project_dir }}"
+      register: compose_output
+
+    - name: Очистка старых неиспользуемых образов
+      command: docker image prune -f
+      changed_when: false
+
+    - name: Небольшая пауза для стабилизации сети (5 секунд)
+      pause:
+        seconds: 5
+
+    # =================================================================
+    # ШАГ 4: Контроль здоровья отказоустойчивого кластера
+    # =================================================================
+    - name: Проверка актуального статуса Patroni-кластера
+      command: docker exec pg-node1 patronictl list
+      register: patroni_status
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Вывод таблицы кластера в консоль Jenkins
+      debug:
+        msg: "{{ patroni_status.stdout_lines }}"
+
+    - name: Автоматическая проверка — завелась ли Реплика?
+      fail:
+        msg: "ВНИМАНИЕ: Реплика (pg-node2) не смогла подключиться к Лидеру или кластер изолирован!"
+      when: "'Replica' not in patroni_status.stdout or 'running' not in patroni_status.stdout"
+    # =================================================================
+    # ШАГ 5: Автоматизация бэкапов через Cron
+    # =================================================================
+    - name: Убеждаемся, что директория для бэкапов существует
+      ansible.builtin.file:
+        path: "{{ project_dir }}/backups"
+        state: directory
+        owner: dyuzov
+        mode: '0755'
+
+    - name: Добавление регулярного бэкапа базы данных в crontab
+      ansible.builtin.cron:
+        name: "AppVendor PostgreSQL Backup" 
+        minute: "0"
+        hour: "3"
+        user: "dyuzov"
+        job: "/usr/bin/python3 {{ project_dir }}/scripts/backup.py >> {{ project_dir }}/backups/cron.log 2>&1"  
+    # =================================================================
+    # ШАГ 6: Автоматический мониторинг аптайма и сети (Watchdog)
+    # =================================================================
+    - name: Гарантировать наличие папок для скриптов и логов мониторинга
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: dyuzov
+        group: dyuzov
+      loop:
+        - "{{ project_dir }}/scripts"
+        - "{{ project_dir }}/logs"
+
+    - name: Копировать скрипт мониторинга сети из шаблона
+      ansible.builtin.template:
+        src: network_watchdog.py.j2
+        dest: "{{ project_dir }}/scripts/network_watchdog.py"
+        mode: '0755'
+        owner: dyuzov
+        group: dyuzov
+
+    - name: Добавить запись в Cron для логирования ребутов сервера
+      ansible.builtin.cron:
+        name: "AppVendor Watchdog Boot Log"
+        special_time: reboot
+        user: "dyuzov"
+        job: "/usr/bin/python3 {{ project_dir }}/scripts/network_watchdog.py boot"
+
+    - name: Добавить запись в Cron для ежеминутной проверки интернета
+      ansible.builtin.cron:
+        name: "AppVendor Watchdog Internet Check"
+        minute: "*"
+        user: "dyuzov"
+        job: "/usr/bin/python3 {{ project_dir }}/scripts/network_watchdog.py"    
