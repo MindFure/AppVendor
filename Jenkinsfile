@@ -16,7 +16,7 @@ pipeline {
             steps {
                 ansiblePlaybook(
                     playbook: 'deploy/ansible/playbook.yml', 
-                    inventory: 'deploy/ansible/inventory/hosts.ini', 
+                    inventory: 'deploy/ansible/prod/inventory/hosts.ini', 
                     credentialsId: 'vm-ssh-key',    
                     colorized: true,                // Чтобы логи были цветными и красивыми
                     extraVars: [
