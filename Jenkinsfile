@@ -6,6 +6,13 @@ pipeline {
     }
 
     stages {
+        // НОВЫЙ ШАГ: Жесткая очистка кэша перед началом работы
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 checkout scm
