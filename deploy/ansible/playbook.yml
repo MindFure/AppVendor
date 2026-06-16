@@ -142,7 +142,7 @@
     # =================================================================
     - name: Убеждаемся, что директория для бэкапов существует
       ansible.builtin.file:
-        path: "{{ project_dir }}/backups"
+        path: "{{ project_root }}/backups"
         state: directory
         owner: dyuzov
         mode: '0755'
