@@ -3,3 +3,4 @@
 
 [webservers:vars]
 ansible_python_interpreter=/usr/bin/python3
+project_root="{{ ansible_env.HOME }}/var/www/AppVendor"
