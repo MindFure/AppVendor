@@ -113,13 +113,15 @@
     # =================================================================
     # ШАГ 4: Контроль здоровья отказоустойчивого кластера
     # =================================================================
-    - name: Проверка актуального статуса Patroni-кластера
+    - name: Ожидание полной инициализации кластера Patroni (до 2 минут)
       command: docker exec pg-node1 patronictl list
       register: patroni_status
-      ignore_errors: yes
+      until: "'Replica' in patroni_status.stdout and 'running' in patroni_status.stdout"
+      retries: 12      # Делаем 12 попыток...
+      delay: 10        # ...каждые 10 секунд
       changed_when: false
 
-    - name: Вывод таблицы кластера в консоль Jenkins
+    - name: Вывод финальной таблицы кластера в консоль Jenkins
       debug:
         msg: "{{ patroni_status.stdout_lines }}"
 
