@@ -122,13 +122,13 @@
       changed_when: false
 
     - name: Инициализация пользователя и базы данных (только на Лидере)
-      ansible.builtin.command: docker exec pg-node1 psql -U postgres -f /docker_postgreqsl/init/01_init.sql
+      ansible.builtin.command: docker exec pg-node1 psql -U postgres -f /docker-entrypoint-initdb.d/01_init.sql
       ignore_errors: true
 
     - name: Накат структуры и данных в базу (только на Лидере)
-      ansible.builtin.command: docker exec pg-node1 psql -U postgres -f /docker_postgreqsl/init/02_dump.sql
+      ansible.builtin.command: docker exec pg-node1 psql -U postgres -f /docker-entrypoint-initdb.d/02_dump.sql
       ignore_errors: true
-
+      
     - name: Вывод финальной таблицы кластера в консоль Jenkins
       debug:
         msg: "{{ patroni_status.stdout_lines }}"
