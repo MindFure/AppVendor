@@ -75,6 +75,7 @@ services:
     hostname: pg-node1
     restart: unless-stopped
     environment:
+      - SPILO_PROVIDER=local
       - SCOPE=pg-cluster
       - ETCD_HOST=etcd:2379
       - ETCD3_HOST=etcd:2379
@@ -110,6 +111,7 @@ services:
     hostname: pg-node2
     restart: unless-stopped
     environment:
+      - SPILO_PROVIDER=local
       - SCOPE=pg-cluster
       - ETCD_HOST=etcd:2379
       - ETCD3_HOST=etcd:2379
