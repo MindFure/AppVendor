@@ -8,9 +8,18 @@ route:
 receivers:
   - name: 'telegram_bot'
     telegram_configs:
-      - bot_token: '8647077830:AAGwMuVlN7t6GGmohKrab5bUIGD5vFaSWt0'
+      - bot_token: '8647077830:AAGwMuVlN7t6GGmohKrab5bUIGD5vFaSWt0' # Не забудь поменять после тестов!
         chat_id: 214325677
+        send_resolved: true
         parse_mode: 'HTML'
-        #api_url: 'https://api.tlgrm.app'
         http_config:
           proxy_url: 'http://4.221.164.109:443'
+        message: |-
+          {{ if eq .Status "firing" }}
+          🚨 <b>АВАРИЯ: {{ .CommonLabels.alertname }}</b>
+          <b>Сводка:</b> {{ .CommonAnnotations.summary }}
+          <b>Детали:</b> {{ .CommonAnnotations.description }}
+          {{ else if eq .Status "resolved" }}
+          ✅ <b>ВОССТАНОВЛЕНИЕ: {{ .CommonLabels.alertname }}</b>
+          <b>Статус:</b> Сервис снова доступен, метрики собираются штатно! 🚀
+          {{ end }}
