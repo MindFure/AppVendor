@@ -121,13 +121,28 @@
       delay: 10        # ...каждые 10 секунд
       changed_when: false
 
-    - name: Инициализация пользователя и базы данных (только на Лидере)
-      ansible.builtin.command: docker exec pg-node2 psql -U postgres -f /docker-entrypoint-initdb.d/01_init.sql
-      ignore_errors: true
+    - name: Определение текущего лидера кластера
+      shell: "docker exec pg-node1 patronictl list --format json"
+      register: patroni_list
+      changed_when: false
 
-    - name: Накат структуры и данных в базу (только на Лидере)
-      ansible.builtin.command: docker exec pg-node2 psql -U postgres -f /docker-entrypoint-initdb.d/02_dump.sql
-      ignore_errors: true
+    - name: Извлечение имени лидера
+      set_fact:
+        current_leader: "{{ (patroni_list.stdout | from_json | selectattr('Role', 'equalto', 'Leader') | map(attribute='Member') | first) }}"
+
+    - name: Вывод текущего лидера для отладки
+      debug:
+        msg: "Текущий лидер кластера: {{ current_leader }}"
+
+    - name: Инициализация пользователя и базы данных
+      command: "docker exec {{ current_leader }} psql -U postgres -f /docker-entrypoint-initdb.d/01_init.sql"
+      register: init_db
+      changed_when: "'CREATE DATABASE' in init_db.stdout or 'already exists' in init_db.stderr"
+
+    - name: Накат структуры и данных в базу
+      command: "docker exec {{ current_leader }} psql -U postgres -d auto_part_shop -f /docker-entrypoint-initdb.d/02_dump.sql"
+      register: dump_db
+      changed_when: "'CREATE' in dump_db.stdout"
       
     - name: Вывод финальной таблицы кластера в консоль Jenkins
       debug:
