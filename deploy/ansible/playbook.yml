@@ -144,7 +144,7 @@
       ansible.builtin.file:
         path: "{{ project_root }}/backups"
         state: directory
-        owner: dyuzov
+        owner: "{{ lookup('env', 'USER') }}"
         mode: '0755'
 
     - name: Добавление регулярного бэкапа базы данных в crontab
@@ -152,7 +152,7 @@
         name: "AppVendor PostgreSQL Backup" # Уникальное имя, по нему Ansible находит таску
         minute: "0"
         hour: "3"
-        user: "dyuzov"
+        user: "{{ ansible_user_id }}"
         job: "/usr/bin/python3 {{ project_root }}/scripts/backup.py >> {{ project_root }}/backups/cron.log 2>&1"  
     # =================================================================
     # ШАГ 6: Автоматический мониторинг аптайма и сети (Watchdog)
@@ -162,8 +162,8 @@
         path: "{{ item }}"
         state: directory
         mode: '0755'
-        owner: dyuzov
-        group: dyuzov
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ ansible_user_id }}"
       loop:
         - "{{ project_root }}/scripts"
         - "{{ project_root }}/logs"
@@ -173,19 +173,19 @@
         src: network_watchdog.py.j2
         dest: "{{ project_root }}/scripts/network_watchdog.py"
         mode: '0755'
-        owner: dyuzov
-        group: dyuzov
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ ansible_user_id }}"
 
     - name: Добавить запись в Cron для логирования ребутов сервера
       ansible.builtin.cron:
         name: "AppVendor Watchdog Boot Log"
         special_time: reboot
-        user: "dyuzov"
+        user: "{{ ansible_user_id }}"
         job: "/usr/bin/python3 {{ project_root }}/scripts/network_watchdog.py boot"
 
     - name: Добавить запись в Cron для ежеминутной проверки интернета
       ansible.builtin.cron:
         name: "AppVendor Watchdog Internet Check"
         minute: "*"
-        user: "dyuzov"
+        user: "{{ ansible_user_id }}"
         job: "/usr/bin/python3 {{ project_root }}/scripts/network_watchdog.py"    
