@@ -21,6 +21,7 @@ pipeline {
                     colorized: true,                // Чтобы логи были цветными и красивыми
                     extraVars: [
                         repo_branch: "${params.BRANCH}"
+                        ansible_user: 'dyuzov'
                     ]
                 )
             }

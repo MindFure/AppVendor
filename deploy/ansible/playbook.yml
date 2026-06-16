@@ -144,7 +144,7 @@
       ansible.builtin.file:
         path: "{{ project_root }}/backups"
         state: directory
-        owner: "{{ lookup('env', 'USER') }}"
+        owner: "{{ ansible_user | default('root') }}"
         mode: '0755'
 
     - name: Добавление регулярного бэкапа базы данных в crontab
@@ -162,8 +162,8 @@
         path: "{{ item }}"
         state: directory
         mode: '0755'
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ ansible_user_id }}"
+        owner: "{{ ansible_user | default('root') }}"
+        group: "{{ ansible_user | default('root') }}"
       loop:
         - "{{ project_root }}/scripts"
         - "{{ project_root }}/logs"
@@ -173,8 +173,8 @@
         src: network_watchdog.py.j2
         dest: "{{ project_root }}/scripts/network_watchdog.py"
         mode: '0755'
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ ansible_user_id }}"
+        owner: "{{ ansible_user | default('root') }}"
+        group: "{{ ansible_user | default('root') }}"
 
     - name: Добавить запись в Cron для логирования ребутов сервера
       ansible.builtin.cron:
