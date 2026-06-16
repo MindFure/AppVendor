@@ -4,6 +4,6 @@ localhost ansible_connection=local
 [all:vars]
 # Указываем, что это локальное окружение (может пригодиться для условий в плейбуках)
 env_name=local
-
+project_root="{{ lookup('env', 'HOME') }}/AppVendor"
 # Явно задаем интерпретатор, чтобы Ansible не ругался на старые пути
 ansible_python_interpreter=/usr/bin/python3
