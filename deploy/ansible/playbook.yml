@@ -134,15 +134,18 @@
       debug:
         msg: "Текущий лидер кластера: {{ current_leader }}"
 
+    - name: Проверка наличия базы данных auto_part_shop
+      command: "docker exec {{ current_leader }} psql -U postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='auto_part_shop'\""
+      register: db_exists
+      changed_when: false
+
     - name: Инициализация пользователя и базы данных
       command: "docker exec {{ current_leader }} psql -U postgres -f /docker-entrypoint-initdb.d/01_init.sql"
-      register: init_db
-      changed_when: "'CREATE DATABASE' in init_db.stdout or 'already exists' in init_db.stderr"
+      when: db_exists.stdout != "1"
 
     - name: Накат структуры и данных в базу
       command: "docker exec {{ current_leader }} psql -U postgres -d auto_part_shop -f /docker-entrypoint-initdb.d/02_dump.sql"
-      register: dump_db
-      changed_when: "'CREATE' in dump_db.stdout"
+      when: db_exists.stdout != "1"
       
     - name: Вывод финальной таблицы кластера в консоль Jenkins
       debug:
