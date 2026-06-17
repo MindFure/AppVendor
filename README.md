@@ -77,7 +77,7 @@ AppVendor/
    ```
 3. Запустите Ansible-плейбук для автоматической конфигурации ОС и запуска контейнеров:
    ```bash
-   ansible-playbook deploy/ansible/playbook.yml -i deploy/ansible/inventory/hosts.ini -K
+   ansible-playbook deploy/ansible/playbook.yml -i deploy/ansible/inventory/local_init/hosts.init -K
    ```
 
 ---
