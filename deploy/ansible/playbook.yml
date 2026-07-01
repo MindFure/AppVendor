@@ -94,6 +94,34 @@
       register: git_result
 
     # =================================================================
+    # ШАГ 2.5: Подготовка директорий и переменных для n8n и Proxy DB
+    # =================================================================
+    - name: Создать обычные директории для n8n и конфигов
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ project_dir }}/n8n_data"
+        - "{{ project_dir }}/shared_configs"
+        - "{{ project_dir }}/config"
+        - "{{ project_dir }}/configs/monitoring"
+
+    - name: Создать директорию для БД с правильными правами (UID 999)
+      ansible.builtin.file:
+        path: "{{ project_dir }}/postgres_data"
+        state: directory
+        owner: "999"
+        group: "999"
+        mode: '0700'
+
+    - name: Скопировать .env файл с секретами на сервер
+      ansible.builtin.template:
+        src: ".env"
+        dest: "{{ project_dir }}/.env"
+        mode: '0600'
+
+    # =================================================================
     # ШАГ 3: Умная сборка и деплой без даунтайма БД
     # =================================================================
     - name: Умное обновление контейнеров (пересборка только изменившегося кода)
