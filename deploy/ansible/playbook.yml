@@ -102,14 +102,14 @@
         state: directory
         mode: '0755'
       loop:
-        - "{{ project_dir }}/n8n_data"
-        - "{{ project_dir }}/shared_configs"
-        - "{{ project_dir }}/config"
-        - "{{ project_dir }}/configs/monitoring"
+        - "{{ project_root }}/n8n_data"
+        - "{{ project_root }}/shared_configs"
+        - "{{ project_root }}/config"
+        - "{{ project_root }}/configs/monitoring"
 
     - name: Создать директорию для БД с правильными правами (UID 999)
       ansible.builtin.file:
-        path: "{{ project_dir }}/postgres_data"
+        path: "{{ project_root }}/postgres_data"
         state: directory
         owner: "999"
         group: "999"
@@ -117,8 +117,8 @@
 
     - name: Скопировать .env файл с секретами на сервер
       ansible.builtin.template:
-        src: ".env"
-        dest: "{{ project_dir }}/.env"
+        src: "{{ project_root }}/.env"
+        dest: "{{ project_root }}/.env"
         mode: '0600'
 
     # =================================================================
