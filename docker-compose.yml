@@ -200,6 +200,54 @@ services:
     networks:
       - mynetwork
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n_proxy_rotator
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_SECURE_COOKIE=false
+      - N8N_HOST=${SERVER_IP}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://${SERVER_IP}:5678
+      - NODE_ENV=production
+      - N8N_ENABLE_NODE_EXECUTE_COMMAND=true
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=proxy_db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=proxy_db
+      - DB_POSTGRESDB_USER=${PROXY_DB_USER}
+      - DB_POSTGRESDB_PASSWORD=${PROXY_DB_PASS}
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./shared_configs:/shared_configs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./configs/monitoring:/root/.n8n-files/monitoring_configs
+      - ./config:/data/config
+    # Запускаем от root, чтобы избежать проблем с правами при перезаписи файла на виртуалке
+    user: "root" 
+    networks:
+      - mynetwork
+    depends_on:
+      - proxy_db
+
+  
+  proxy_db:
+    image: postgres:15
+    container_name: proxy_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PROXY_DB_USER}
+      POSTGRES_PASSWORD: ${PROXY_DB_PASS}
+      POSTGRES_DB: proxy_db
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - mynetwork
+
 networks:
   mynetwork:
     driver: bridge
